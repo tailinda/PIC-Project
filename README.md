@@ -1,4 +1,4 @@
-.# PIC-Project
+## PIC-Project
 
 高應大電機工程系 PIC課程訓練
 NKUAS Department of Electric Engineering
