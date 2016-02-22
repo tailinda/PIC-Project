@@ -1,0 +1,260 @@
+/*
+ * File:   LCD.h
+ * Author: Shiuan Chi Huang
+ * 
+ * Created on 2016/1/19 16:02
+ */
+#ifndef _LCD_H_
+#define _LCD_H_
+#define CPU_FCY 40
+
+/*****  IO Port Definition  *****/
+#define LCD_RS          LATDbits.LATD0
+#define LCD_RW          LATDbits.LATD11
+#define LCD_E           LATDbits.LATD10
+//#define LCD_BACKLIGHT    
+
+//#define LCD_DATA0   
+//#define LCD_DATA1
+//#define LCD_DATA2
+//#define LCD_DATA3
+#define LCD_DATA4   LATDbits.LATD9
+#define LCD_DATA5   LATDbits.LATD8
+#define LCD_DATA6   LATAbits.LATA15
+#define LCD_DATA7   LATAbits.LATA4
+
+/****  Command Definition  *****/
+#define Write_COMMAND {LCD_RS = 0; LCD_RW = 0;}
+#define Write_DATA {LCD_RS = 1; LCD_RW = 0;}
+#define Read_DATA {LCD_RS = 1; LCD_RW = 1;}
+#define Read_BUSY {LCD_RS = 0; LCD_RW = 1;}
+#define LCD_CLR 0x01
+#define LCD_ReturnHome 0x02
+#define LCD_OFF 0x08
+#define LCD_ON 0x0C
+#define LCD_ENTRY 0x06
+#define LCD_SET 0x28
+#define LCD_CUR_HOME 0x80
+
+/*LCD DATA STRUCT*/
+union{
+	struct{
+		unsigned bit0:1;
+		unsigned bit1:1;
+		unsigned bit2:1;
+		unsigned bit3:1;
+		unsigned bit4:1;
+		unsigned bit5:1;
+		unsigned bit6:1;
+		unsigned bit7:1;
+	};
+	struct{
+		unsigned char byte;
+	};
+}LCD_DATA;
+
+/****  LCD Delay  ****/
+void	LCD_E_Delay(void)
+{
+    int	E_Loop ;
+    for ( E_Loop = 0 ; E_Loop < CPU_FCY * 5 ; E_Loop ++ ) ;
+}
+void 	LCD_Delay200us(void)
+{
+	int		Loop_200us ;
+
+	for ( Loop_200us = 0 ; Loop_200us < CPU_FCY * 40  ; Loop_200us++)	;
+
+}
+void LCD_Delay200usX(int UnitOf200us)
+{
+		int Loop_200usX ;
+
+		for ( Loop_200usX = 0 ; Loop_200usX < UnitOf200us ; Loop_200usX ++ )
+		LCD_Delay200us( ) ;
+}
+
+/****  LCD todo  ****/
+void LCD_Command_4b(unsigned char Command)		// Write Command to LCD
+{
+	//high nibble 4 bits  
+	LCD_DATA.byte=Command;
+	LCD_DATA4=LCD_DATA.bit4;
+	LCD_DATA5=LCD_DATA.bit5;
+	LCD_DATA6=LCD_DATA.bit6;
+	LCD_DATA7=LCD_DATA.bit7;
+	Write_COMMAND;
+	LCD_E_Delay() ;
+	LCD_E = 1 ;
+	LCD_E_Delay() ;
+	LCD_E = 0 ;
+	LCD_E_Delay() ;
+
+}
+void LCD_Command(unsigned char Command)		// Write Command to LCD 
+{
+	//high nibble 4 bits
+	LCD_DATA.byte=Command;
+	LCD_DATA4=LCD_DATA.bit4;
+	LCD_DATA5=LCD_DATA.bit5;
+	LCD_DATA6=LCD_DATA.bit6;
+	LCD_DATA7=LCD_DATA.bit7;
+	Write_COMMAND;
+	LCD_E_Delay() ;
+	LCD_E = 1 ;
+	LCD_E_Delay() ;
+	LCD_E = 0 ;
+	LCD_E_Delay() ;
+
+	//low nibble 4 bits
+	LCD_DATA4=LCD_DATA.bit0;
+	LCD_DATA5=LCD_DATA.bit1;
+	LCD_DATA6=LCD_DATA.bit2;
+	LCD_DATA7=LCD_DATA.bit3;
+	Write_COMMAND;
+	LCD_E_Delay() ;
+	LCD_E = 1 ;
+	LCD_E_Delay() ;
+	LCD_E = 0 ;
+	LCD_E_Delay() ;
+	//LCD_Delay200usX(10) ;
+}
+/*****  Initialize  ****/
+void LCD_init(void)
+{
+	LCD_Delay200usX(300) ;		// >= 40ms,Wait for LCD power on delay
+	LCD_E = 0 ;
+	LCD_E_Delay() ;
+  /*
+    LCD_Command_4b(0x30);   //check
+    LCD_Delay200usX(25);    // >4.1ms
+    LCD_Command_4b(0x30);   //check
+    LCD_Delay200usX(1);     // >100us
+    LCD_Command_4b(0x30);   //check
+    LCD_Delay200usX(10);    //*/
+    LCD_Command_4b(0x20);   //check
+    LCD_Delay200usX(10);
+
+	LCD_Command(LCD_SET) ;	//must >=72uS
+	LCD_Delay200usX(1);
+
+	LCD_Command(LCD_OFF) ;	//must >= 72uS
+	LCD_Delay200usX(10) ;
+
+	LCD_Command(LCD_CLR) ;	//must >=4.6ms
+	LCD_Delay200usX(60) ;
+
+	LCD_Command(LCD_ENTRY) ;	//must >=72uS
+	LCD_Delay200usX(10) ;
+    
+   LCD_Command(LCD_ON) ;		//must >=72uS
+	LCD_Delay200usX(10) ;
+
+	LCD_Command(LCD_CUR_HOME) ;		//must >=72uS
+	LCD_Delay200usX(10) ;
+	//============
+	LCD_Delay200usX(250) ;		// >= 40ms,Wait for LCD power on delay
+}
+
+void LCD_WriteData(unsigned char Data)		// Write data to LCD
+{    
+	//high nibble
+	LCD_DATA.byte=Data;
+	LCD_DATA4=LCD_DATA.bit4;     
+	LCD_DATA5=LCD_DATA.bit5;       
+	LCD_DATA6=LCD_DATA.bit6;       
+	LCD_DATA7=LCD_DATA.bit7;       
+	
+	Write_DATA;
+	LCD_E_Delay() ;
+	LCD_E = 1 ;
+	LCD_E_Delay() ;
+	LCD_E = 0 ;
+	LCD_E_Delay() ;
+
+	//low nibble 4 bits
+	LCD_DATA4=LCD_DATA.bit0;
+	LCD_DATA5=LCD_DATA.bit1;
+	LCD_DATA6=LCD_DATA.bit2;
+	LCD_DATA7=LCD_DATA.bit3;
+	Write_DATA;
+	LCD_E_Delay() ;
+	LCD_E = 1 ;
+	LCD_E_Delay() ;
+	LCD_E = 0 ;
+	LCD_E_Delay() ;
+}
+void putcLCD( unsigned char DataChar)
+{
+		LCD_WriteData(DataChar);
+}
+
+void putsLCD( unsigned char *DataString )
+{
+		while ( *DataString != 0x00 )		//not end of line
+		{
+ 			//while ( LCDIsBusy() );
+			LCD_WriteData( *DataString++ ) ;
+		}
+}
+void LCD_Cursor_New( char Cur_X , char Cur_Y )
+{
+    unsigned char	BaseAddr ;
+    switch ( Cur_X )               
+    {
+        case	0 :
+                BaseAddr = 0xC0 ;   
+                break ;
+        case	1 :
+                BaseAddr = 0x80 ;   
+                break ;
+        case	2 :
+                BaseAddr = 0x94 ;   
+                break ;
+        case	3 :
+                BaseAddr = 0xD4 ;   
+                break ;
+        default :
+                BaseAddr = 0x00 ;
+                break ;
+    }
+    BaseAddr += Cur_Y ;
+    LCD_Command(BaseAddr) ;
+    //LCD_Delay200usX(10) ;
+
+}
+void LCD_Clear()
+{
+    LCD_Command(LCD_CLR);
+}
+void LCD_Clear_ALine(unsigned char line)
+{
+    switch(line)
+    {
+        case 1:
+            LCD_Cursor_New(0, 0);
+            putsLCD("                    ");
+            break;
+        case 2:
+            LCD_Cursor_New(1, 0);
+            putsLCD("                    ");
+            break;
+        case 3:
+            LCD_Cursor_New(2, 0);
+            putsLCD("                    ");
+            break;
+        case 4:
+            LCD_Cursor_New(3, 0);
+            putsLCD("                    ");
+            break;
+        default:
+            LCD_WriteData(LCD_CLR);
+            break;
+    }
+    
+    
+    
+    
+}
+
+#endif
