@@ -60,6 +60,13 @@
 // CONFIG7H
 #pragma config EBTRB = OFF      // Boot Block Table Read Protection bit (Boot block (000000-0007FFh) not protected from table reads executed in other blocks)
 
+void LCD_init(void);
+void putcLCD( unsigned char DataChar);
+void putsLCD( unsigned char *DataString );
+void LCD_WriteData(unsigned char Data);
+void LCD_Cursor_New( char Cur_X , char Cur_Y );
+void LCD_Clear_ALine(unsigned char line);
+
 void delay(unsigned long delay_count)
 {
     unsigned long       temp1;
@@ -72,34 +79,39 @@ void debounce(void){
 
 void main(void)
 {
-    LCD_init();
     TRISA = 0xFF;
-    
+    TRISD = 0x00;
+    unsigned char name[20] = "    LCD_COUNT    ";
+    LCD_init();
+   
     while(1){
-        int i, str[20];
-        char name[20] = "計數器";
-        char number[20] = "1102104104";
-     
         LCD_Cursor_New(1, 0);
-        sprintf(name,"%s",name);
         putsLCD(name);
-        LCD_Cursor_New(4, 5);
-        sprintf(number,"%s",number);
-        putsLCD(number);
+        int i = 0, j = 0, str[20];
         
-         if((PORTAbits.RA0) == 0){
+         if((PORTAbits.RA0) == 0 && j == 0){
              debounce();
-             for(i = 0; i < 99999; i++){
-                sprintf(str, "計數到%d", i);
-                LCD_Cursor_New(2, 0);
+             for(i = i; i < i + 1; i++){
+                sprintf(str, "   count   %d", i);
+                LCD_Cursor_New(0, 0);
                 putsLCD(str);
              }
+             j++;
          }
-         
+        
+        if((PORTAbits.RA0) == 0 && j == 1){
+             debounce();
+                LCD_Cursor_New(0, 0);
+                sprintf(str, "   count   %d", i); 
+                putsLCD(str);
+             j = 0;
+         }
+       
          if((PORTAbits.RA1) == 0){          
              debounce();
-             LCD_Clear_ALine(2);        //清除第二行
+             LCD_Clear_ALine(1);        //�M��
          }
+   
         
     }
 }
