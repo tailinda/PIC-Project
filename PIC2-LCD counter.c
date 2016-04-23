@@ -74,44 +74,48 @@ void delay(unsigned long delay_count)
 }
 
 void debounce(void){
-    delay(100000);
+    delay(10000);
 }
 
 void main(void)
 {
-    TRISA = 0xFF;
+    TRISA = 0x00;
+    TRISE = 0x00;
     TRISD = 0x00;
-    unsigned char name[20] = "    LCD_COUNT    ";
+    unsigned char name[20] = "    LCD_COUNT";
     LCD_init();
+    LCD_Cursor_New(1, 0);
+    putsLCD(name);
    
     while(1){
-        LCD_Cursor_New(1, 0);
-        putsLCD(name);
+      
         int i = 0, j = 0, str[20];
         
-         if((PORTAbits.RA0) == 0 && j == 0){
+         if((PORTEbits.RE1) == 1 && j == 0){
              debounce();
+             putcLCD(6);
              for(i = i; i < i + 1; i++){
-                sprintf(str, "   count   %d", i);
-                LCD_Cursor_New(0, 0);
+                delay(300000);
+                sprintf(str, "    count  %d   ", i);
+                LCD_Cursor_New(1, 0);
                 putsLCD(str);
              }
              j++;
          }
         
-        if((PORTAbits.RA0) == 0 && j == 1){
+        if((PORTEbits.RE1) == 1 && j == 1){
              debounce();
-                LCD_Cursor_New(0, 0);
+             LCD_Cursor_New(1, 0);
+             putcLCD(4);
+                LCD_Cursor_New(1, 0);
                 sprintf(str, "   count   %d", i); 
                 putsLCD(str);
              j = 0;
          }
        
-         if((PORTAbits.RA1) == 0){          
+         if((PORTAbits.RA1) == 1){          
              debounce();
-             LCD_Clear_ALine(1);        //清除
+             LCD_Clear_ALine(2);        //清除
          }
-   
-        
     }
 }
